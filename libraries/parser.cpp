@@ -148,19 +148,19 @@ void Scene::loadFromXml(const std::string &filepath) {
     // Get Meshes
     element = root->FirstChildElement("Objects");
     element = element->FirstChildElement("Mesh");
-
+    Mesh *mesh;
     while (element) {
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
         stream >> materialId;
-
-        meshes.push_back(Mesh({}, materialId));
+        mesh = new Mesh({}, materialId);
+        surfaces.push_back(mesh);
 
         child = element->FirstChildElement("Faces");
         stream << child->GetText() << std::endl;
         while (!(stream >> vid1).eof()) {
             stream >> vid2 >> vid3;
-            meshes.back().addFace(
+            mesh->addFace(
                 {vertex_data[vid1], vertex_data[vid2], vertex_data[vid3]});
         }
         stream.clear();
@@ -181,7 +181,7 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         stream >> vid1 >> vid2 >> vid3;
 
-        triangles.push_back(Triangle(
+        surfaces.push_back(new Triangle(
             {vertex_data[vid1], vertex_data[vid2], vertex_data[vid3]},
             materialId));
         element = element->NextSiblingElement("Triangle");
@@ -205,7 +205,7 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         stream >> radius;
 
-        spheres.push_back(Sphere(vertex_data[vid1], radius, materialId));
+        surfaces.push_back(new Sphere(vertex_data[vid1], radius, materialId));
         element = element->NextSiblingElement("Sphere");
     }
 }

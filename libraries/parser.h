@@ -38,10 +38,13 @@ struct Scene {
     std::vector<PointLight> point_lights;
     std::vector<Material> materials;
     std::vector<Vec3f> vertex_data;
+    /*
     std::vector<Mesh> meshes;
     std::vector<Triangle> triangles;
     std::vector<Sphere> spheres;
-
+    */
+    std::vector<Surface*> surfaces;
+    
     // Functions
     void loadFromXml(const std::string &filepath);
 };

@@ -21,3 +21,7 @@ void Sphere::normalAt(const Ray &ray, float t, Ray &out) {
     out.origin = ray.origin + ray.direction * t;
     out.direction = (out.origin - center).normalize();
 }
+
+int Sphere::getMaterialId() const {
+    return materialId;    
+}

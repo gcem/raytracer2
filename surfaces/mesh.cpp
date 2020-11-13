@@ -33,3 +33,7 @@ void Mesh::normalAt(const Ray &ray, float t, Ray &out) {
 void Mesh::addFace(Triangle::Vertices vertices) {
     triangles.push_back(TriangleBase(vertices));    
 }
+
+int Mesh::getMaterialId() const {
+    return materialId;    
+}

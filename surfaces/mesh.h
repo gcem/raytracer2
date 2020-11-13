@@ -14,9 +14,10 @@ public:
     // implementing bounding boxes
     void addFace(Triangle::Vertices vertices);
 
-    int materialId;
+    int getMaterialId() const override;
 
 protected:
     std::vector<TriangleBase> triangles;
     Ray lastNormal;
+    int materialId;
 };

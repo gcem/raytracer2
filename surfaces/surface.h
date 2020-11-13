@@ -11,6 +11,9 @@ public:
     // and return this normal
     virtual void normalAt(const Ray &ray, float t, Ray &out) = 0;
 
+    // @returns 0 if not relevant (ids are one-indexed)
+    virtual int getMaterialId() const;
+
 protected:
     Surface() {}
 };

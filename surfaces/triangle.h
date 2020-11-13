@@ -15,6 +15,7 @@ public:
     float intersect(const Ray &ray) override;
     void normalAt(const Ray &ray, float t, Ray &out) override;
 
+protected:
     Vertices v;
     Vec3f normal, col1, col2;
     float area, detL;
@@ -24,5 +25,7 @@ class Triangle : public TriangleBase {
 public:
     Triangle(const Vertices &v, int materialId);
 
+    int getMaterialId() const override;
+protected:
     int materialId;
 };

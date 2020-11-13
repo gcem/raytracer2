@@ -9,8 +9,10 @@ public:
     float intersect(const Ray &ray) override;
     void normalAt(const Ray &ray, float t, Ray &out) override;
     
-    int materialId;
+    int getMaterialId() const override;
+
 protected:
     Vec3f center;
     float radius;
+    int materialId;
 };
