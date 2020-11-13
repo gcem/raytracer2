@@ -1,4 +1,11 @@
+#pragma once
+
+#include "vector.h"
 #include "parser.h"
+
+#include <vector>
+
+struct Camera;
 
 struct Ray {
     Vec3f origin;

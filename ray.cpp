@@ -20,7 +20,7 @@ void castRays(std::vector<Ray> &out, const Camera &camera) {
         for (int col = 0; col < camera.width; col++) {
             Ray &ray = out[i++];
             ray.origin = camera.position;
-            ray.direction = currdir;
+            ray.direction = currdir.normalize();
             currdir = currdir + right;
         }
         leftdir = leftdir - up;
