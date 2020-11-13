@@ -1,3 +1,5 @@
+#pragma once
+
 #include "surface.h"
 
 class TriangleBase : public Surface {
@@ -6,6 +8,7 @@ public:
         Vec3f va, vb, vc;
     };
 
+    TriangleBase() {}
     TriangleBase(const Vertices &v);
 
     // @returns -1 if no intersection, t otherwise

@@ -5,6 +5,7 @@
 #include "sphere.h"
 #include "triangle.h"
 #include "mesh.h"
+#include "camera.h"
 #include "vector.h"
 
 #include <cmath>
@@ -13,16 +14,6 @@
 
 // Notice that all the structures are as simple as possible
 // so that you are not enforced to adopt any style or design.
-
-struct Camera {
-    Vec3f position;
-    Vec3f gaze;
-    Vec3f up;
-    Vec4f near_plane;
-    float near_distance;
-    int width, height;
-    std::string image_name;
-};
 
 struct PointLight {
     Vec3f position;

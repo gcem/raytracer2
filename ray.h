@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vector.h"
-#include "parser.h"
+#include "camera.h"
 
 #include <vector>
 

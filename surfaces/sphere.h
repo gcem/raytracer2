@@ -1,3 +1,5 @@
+#pragma once
+
 #include "surface.h"
 
 class Sphere : public Surface {
