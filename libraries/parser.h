@@ -30,7 +30,7 @@ struct Material {
 
 struct Scene {
     // Data
-    Vec3i background_color;
+    Vec3f background_color;
     float shadow_ray_epsilon;
     int max_recursion_depth;
     std::vector<Camera> cameras;
@@ -44,7 +44,7 @@ struct Scene {
     std::vector<Sphere> spheres;
     */
     std::vector<Surface*> surfaces;
-    
+
     // Functions
     void loadFromXml(const std::string &filepath);
 };

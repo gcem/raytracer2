@@ -17,12 +17,12 @@ int main(int argc, char *argv[]) {
             new unsigned char[camera.width * camera.height * 3];
         std::vector<Ray> rays;
         castRays(rays, camera);
-        trace(rays, scene, image);
-        // for (int i = 0, k = 0; i < camera.width * camera.height; i++) {
-        //     image[k++] = (rays[i].direction.x + 10) * 10;
-        //     image[k++] = (rays[i].direction.y + 10) * 10;
-        //     image[k++] = (rays[i].direction.z + 11) * 0.001;
-        // }
+        for (int i = 0, k = 0; i < camera.width * camera.height; i++) {
+            auto color = trace(rays[i], scene.max_recursion_depth, scene);
+            image[k++] = color.x > 255 ? 255 : std::roundf(color.x);
+            image[k++] = color.y > 255 ? 255 : std::roundf(color.y);
+            image[k++] = color.z > 255 ? 255 : std::roundf(color.z);
+        }
         write_ppm("output/" + camera.image_name, image, camera.width,
                   camera.height);
         delete[] image;

@@ -6,6 +6,9 @@ struct Vec3f {
     float x, y, z;
 
     Vec3f operator*(float f) const { return Vec3f{x * f, y * f, z * f}; }
+    Vec3f operator*(const Vec3f &v) const {
+        return Vec3f{x * v.x, y * v.y, z * v.z};
+    }
     Vec3f operator+(const Vec3f &v) const {
         return Vec3f{x + v.x, y + v.y, z + v.z};
     }
@@ -39,6 +42,16 @@ struct Vec3f {
         x -= v.x;
         y -= v.y;
         z -= v.z;
+    }
+    void operator/=(float f) {
+        x /= f;
+        y /= f;
+        z /= f;
+    }
+    void operator*=(float f) {
+        x *= f;
+        y *= f;
+        z *= f;
     }
 };
 

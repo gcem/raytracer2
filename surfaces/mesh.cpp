@@ -35,5 +35,5 @@ void Mesh::addFace(Triangle::Vertices vertices) {
 }
 
 int Mesh::getMaterialId() const {
-    return materialId;    
+    return materialId;
 }

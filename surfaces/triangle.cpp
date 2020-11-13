@@ -33,7 +33,7 @@ float TriangleBase::intersect(const Ray &ray) {
         return -1;
 
     float detGamma = col1.x * (ve.y * col3.z - ve.z * col3.y) - ve.x * detM +
-                     col3.z * (col1.y * ve.z - col1.z * ve.y);
+                     col3.x * (col1.y * ve.z - col1.z * ve.y);
     float gamma = detGamma / detA;
     if (gamma < 0 || beta + gamma > 1)
         return -1;
@@ -50,7 +50,10 @@ float TriangleBase::intersect(const Ray &ray) {
 
 void TriangleBase::normalAt(const Ray &ray, float t, Ray &out) {
     out.origin = ray.origin + ray.direction * t;
-    out.direction = normal;
+    if (ray.direction.dot(normal) < 0)
+        out.direction = normal;
+    else
+        out.direction = normal * -1;
 }
 
 int Triangle::getMaterialId() const {
