@@ -27,7 +27,7 @@ float Mesh::intersect(const Ray &ray) {
         thigh = std::min(thigh, maxt.z);
 
         if (thigh - tlow <
-            -0.001) // allow some error for boxes with no volume
+            -0.001 || thigh < 0) // allow some error for boxes with no volume
             return -1;
     }
 
@@ -62,44 +62,26 @@ void Mesh::updateFaces() {
     box.min.x = box.min.y = box.min.z = MAXFLOAT_CONST;
     for (auto &triangle : triangles) {
         auto &va = triangle.v.va, &vb = triangle.v.vb, &vc = triangle.v.vc;
-        if (va.x < box.min.x)
-            box.min.x = va.x;
-        if (va.x > box.max.x)
-            box.max.x = va.x;
-        if (va.y < box.min.y)
-            box.min.y = va.y;
-        if (va.y > box.max.y)
-            box.max.y = va.y;
-        if (va.z < box.min.z)
-            box.min.z = va.z;
-        if (va.z > box.max.z)
-            box.max.z = va.z;
+        box.min.x = std::min(box.min.x, va.x);
+        box.max.x = std::max(box.max.x, va.x);
+        box.min.y = std::min(box.min.y, va.y);
+        box.max.y = std::max(box.max.y, va.y);
+        box.min.z = std::min(box.min.z, va.z);
+        box.max.z = std::max(box.max.z, va.z);
 
-        if (vb.x < box.min.x)
-            box.min.x = vb.x;
-        if (vb.x > box.max.x)
-            box.max.x = vb.x;
-        if (vb.y < box.min.y)
-            box.min.y = vb.y;
-        if (vb.y > box.max.y)
-            box.max.y = vb.y;
-        if (vb.z < box.min.z)
-            box.min.z = vb.z;
-        if (vb.z > box.max.z)
-            box.max.z = vb.z;
+        box.min.x = std::min(box.min.x, vb.x);
+        box.max.x = std::max(box.max.x, vb.x);
+        box.min.y = std::min(box.min.y, vb.y);
+        box.max.y = std::max(box.max.y, vb.y);
+        box.min.z = std::min(box.min.z, vb.z);
+        box.max.z = std::max(box.max.z, vb.z);
 
-        if (vc.x < box.min.x)
-            box.min.x = vc.x;
-        if (vc.x > box.max.x)
-            box.max.x = vc.x;
-        if (vc.y < box.min.y)
-            box.min.y = vc.y;
-        if (vc.y > box.max.y)
-            box.max.y = vc.y;
-        if (vc.z < box.min.z)
-            box.min.z = vc.z;
-        if (vc.z > box.max.z)
-            box.max.z = vc.z;
+        box.min.x = std::min(box.min.x, vc.x);
+        box.max.x = std::max(box.max.x, vc.x);
+        box.min.y = std::min(box.min.y, vc.y);
+        box.max.y = std::max(box.max.y, vc.y);
+        box.min.z = std::min(box.min.z, vc.z);
+        box.max.z = std::max(box.max.z, vc.z);
     }
 }
 
