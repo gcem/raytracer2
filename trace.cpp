@@ -8,7 +8,7 @@
 std::pair<float, Surface *>
 closestIntersection(const Ray &ray, const std::vector<Surface *> &surfaces) {
     Surface *closest = nullptr;
-    float mint = MAXFLOAT;
+    float mint = MAXFLOAT_CONST;
     for (auto surface : surfaces) {
         float t = surface->intersect(ray);
         if (t > 0 && t < mint) {

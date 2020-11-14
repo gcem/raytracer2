@@ -31,7 +31,7 @@ float Mesh::intersect(const Ray &ray) {
             return -1;
     }
 
-    float minT = MAXFLOAT / 2;
+    float minT = MAXFLOAT_CONST / 2;
     TriangleBase *closest = nullptr;
     for (auto &triangle : triangles) {
         float t = triangle.intersect(ray);
@@ -58,8 +58,8 @@ void Mesh::updateFaces() {
         bruteForce = true;
         return;
     }
-    box.max.x = box.max.y = box.max.z = MINFLOAT;
-    box.min.x = box.min.y = box.min.z = MAXFLOAT;
+    box.max.x = box.max.y = box.max.z = MINFLOAT_CONST;
+    box.min.x = box.min.y = box.min.z = MAXFLOAT_CONST;
     for (auto &triangle : triangles) {
         auto &va = triangle.v.va, &vb = triangle.v.vb, &vc = triangle.v.vc;
         if (va.x < box.min.x)

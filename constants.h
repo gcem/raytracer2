@@ -2,5 +2,5 @@
 
 #include <limits>
 
-#define MAXFLOAT (std::numeric_limits<float>::max())
-#define MINFLOAT (std::numeric_limits<float>::min())
+#define MAXFLOAT_CONST (std::numeric_limits<float>::max())
+#define MINFLOAT_CONST (std::numeric_limits<float>::min())
