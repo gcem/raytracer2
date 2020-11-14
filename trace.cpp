@@ -64,5 +64,19 @@ Vec3f computeColor(const Ray &ray, int remainingReflections, Scene &scene,
                       (lightDistance * lightDistance));
         }
 
+    if (remainingReflections > 0 &&
+        (mat.mirror.x || mat.mirror.y || mat.mirror.z)) {
+        Ray reflectedRay;
+        reflectedRay.origin =
+            normal.origin +
+            normal.direction *
+                scene.shadow_ray_epsilon; // TODO: do not hit current object
+        reflectedRay.direction =
+            ray.direction -
+            normal.direction * (2 * normal.direction.dot(ray.direction));
+        color +=
+            mat.mirror * trace(reflectedRay, remainingReflections - 1, scene);
+    }
+
     return color;
 }

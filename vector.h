@@ -55,10 +55,6 @@ struct Vec3f {
     }
 };
 
-struct Vec3i {
-    int x, y, z;
-};
-
 struct Vec4f {
     union {
         struct {
