@@ -6,18 +6,27 @@ struct Vec3f {
     float x, y, z;
 
     Vec3f operator*(float f) const { return Vec3f{x * f, y * f, z * f}; }
+
     Vec3f operator*(const Vec3f &v) const {
         return Vec3f{x * v.x, y * v.y, z * v.z};
     }
+
+    Vec3f operator/(const Vec3f &v) const {
+        return Vec3f{x / v.x, y / v.y, z / v.z};
+    }
+
     Vec3f operator+(const Vec3f &v) const {
         return Vec3f{x + v.x, y + v.y, z + v.z};
     }
+
     Vec3f operator-(const Vec3f &v) const {
         return Vec3f{x - v.x, y - v.y, z - v.z};
     }
+
     Vec3f cross(const Vec3f &v) const {
         return Vec3f{y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x};
     }
+    
     float dot(const Vec3f &v) const { return x * v.x + y * v.y + z * v.z; }
     // both vectors should be normalized
     float sine(const Vec3f &v) const {

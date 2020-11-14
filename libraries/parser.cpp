@@ -163,6 +163,7 @@ void Scene::loadFromXml(const std::string &filepath) {
             mesh->addFace(
                 {vertex_data[vid1], vertex_data[vid2], vertex_data[vid3]});
         }
+        mesh->updateFaces();
         stream.clear();
         element = element->NextSiblingElement("Mesh");
     }

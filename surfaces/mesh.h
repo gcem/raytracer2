@@ -14,10 +14,18 @@ public:
     // implementing bounding boxes
     void addFace(Triangle::Vertices vertices);
 
+    // call after all faces are added
+    void updateFaces();
+
     int getMaterialId() const override;
 
 protected:
+    struct BoundingBox {
+        Vec3f min, max;
+    };
+
     std::vector<TriangleBase> triangles;
     Ray lastNormal;
     int materialId;
+    BoundingBox box;
 };

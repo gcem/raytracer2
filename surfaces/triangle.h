@@ -15,8 +15,8 @@ public:
     float intersect(const Ray &ray) override;
     void normalAt(const Ray &ray, float t, Ray &out) override;
 
-protected:
     Vertices v;
+protected:
     Vec3f normal, col1, col2;
     float area, detL;
 };

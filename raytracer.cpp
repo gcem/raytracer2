@@ -2,11 +2,15 @@
 #include "ppm.h"
 #include "ray.h"
 #include "trace.h"
+#include <chrono>
 #include <iostream>
 
 typedef unsigned char RGB[3];
 
 int main(int argc, char *argv[]) {
+    // TODO: delete
+    auto start = std::chrono::system_clock::now();
+
     // Sample usage for reading an XML scene file
     Scene scene;
 
@@ -27,4 +31,11 @@ int main(int argc, char *argv[]) {
                   camera.height);
         delete[] image;
     }
+
+    // TODO: delete
+    auto end = std::chrono::system_clock::now();
+    int64_t milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+            .count();
+    std::cout << "Time: " << milliseconds << " milliseconds" << std::endl;
 }
