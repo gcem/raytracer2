@@ -27,5 +27,6 @@ protected:
     std::vector<TriangleBase> triangles;
     Ray lastNormal;
     int materialId;
+    bool bruteForce = false;
     BoundingBox box;
 };
