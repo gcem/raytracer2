@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
 
     scene.loadFromXml(argv[1]);
 
+    auto afterload = std::chrono::system_clock::now();
+
     for (auto camera : scene.cameras) {
         unsigned char *image =
             new unsigned char[camera.width * camera.height * 3];
@@ -34,8 +36,15 @@ int main(int argc, char *argv[]) {
 
     // TODO: delete
     auto end = std::chrono::system_clock::now();
+    int64_t loading = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          afterload - start)
+                          .count();
+    int64_t rendering =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - afterload)
+            .count();
     int64_t milliseconds =
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
             .count();
-    std::cout << "Time: " << milliseconds << " milliseconds" << std::endl;
+    std::cout << "Loading: " << loading << "\nRendering: " << rendering
+              << "\nTime: " << milliseconds << " milliseconds" << std::endl;
 }
