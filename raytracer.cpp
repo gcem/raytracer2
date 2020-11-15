@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     for (auto camera : scene.cameras) {
         uint8_t *image =
             new uint8_t[camera.width * camera.height * 3];
-        std::vector<Ray> rays;
+        Ray *rays = new Ray[camera.width * camera.height];
         castRays(rays, camera);
         for (int i = 0, k = 0; i < camera.width * camera.height; i++) {
             auto color = trace(rays[i], scene.max_recursion_depth, scene);
@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
                          .count()
                   << "\n";
         delete[] image;
+        delete[] rays;
     }
 
     // TODO: delete
