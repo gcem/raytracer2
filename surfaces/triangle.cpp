@@ -29,20 +29,20 @@ float TriangleBase::intersect(const Ray &ray) {
     float detBeta = ve.x * detR - col2.x * (ve.y * col3.z - ve.z * col3.y) +
                     col3.x * (ve.y * col2.z - ve.z * col2.y);
     float beta = detBeta / detA;
-    if (beta < 0 || beta > 1)
+    if (beta < -TRIANGLE_EPSILON || beta > 1)
         return -1;
 
     float detGamma = col1.x * (ve.y * col3.z - ve.z * col3.y) - ve.x * detM +
                      col3.x * (col1.y * ve.z - col1.z * ve.y);
     float gamma = detGamma / detA;
-    if (gamma < 0 || beta + gamma > 1)
+    if (gamma < -TRIANGLE_EPSILON || beta + gamma > 1)
         return -1;
 
     float detT = col1.x * (col2.y * ve.z - col2.z * ve.y) -
                  col2.x * (col1.y * ve.z - col1.z * ve.y) + ve.x * detL;
     float t = detT / detA;
 
-    if (t < 0.0001)
+    if (t < TRIANGLE_EPSILON)
         return -1;
 
     return t;

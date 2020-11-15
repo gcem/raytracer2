@@ -5,7 +5,7 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
     hasBox = false;
     hasChildren = false;
 
-    if (vertices.size() <= 2) {
+    if (vertices.size() <= BRUTEFORCE_THRESHOLD) {
         for (auto &tri : vertices)
             triangles.push_back(TriangleBase(tri));
         return;
@@ -38,7 +38,7 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
         max.z = std::max(max.z, v.vc.z);
     }
 
-    if (vertices.size() <= 4) {
+    if (vertices.size() <= SUBDIVISION_THRESHOLD) {
         for (auto &tri : vertices)
             triangles.push_back(TriangleBase(tri));
         return;
