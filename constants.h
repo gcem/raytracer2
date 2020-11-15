@@ -9,3 +9,6 @@
 #define SUBDIVISION_THRESHOLD 12
 
 #define TRIANGLE_EPSILON 0.00001f
+
+// we could check the hardware in runtime but this is ok for ineks
+#define THREAD_CNT 8

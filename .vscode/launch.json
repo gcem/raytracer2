@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/raytracer",
             "args": [
-                "input/killeroo.xml"
+                "input/horse_and_mug.xml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

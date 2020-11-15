@@ -5,8 +5,6 @@
 #include <chrono>
 #include <iostream>
 
-typedef unsigned char RGB[3];
-
 int main(int argc, char *argv[]) {
     // TODO: delete
     auto start = std::chrono::system_clock::now();
@@ -19,8 +17,8 @@ int main(int argc, char *argv[]) {
     auto afterload = std::chrono::system_clock::now();
 
     for (auto camera : scene.cameras) {
-        unsigned char *image =
-            new unsigned char[camera.width * camera.height * 3];
+        uint8_t *image =
+            new uint8_t[camera.width * camera.height * 3];
         std::vector<Ray> rays;
         castRays(rays, camera);
         for (int i = 0, k = 0; i < camera.width * camera.height; i++) {
