@@ -4,23 +4,24 @@
 #include <sstream>
 #include <thread>
 
-void writeToBuffer(std::string *out, uint8_t *data, int start, int end,
+void writeToBuffer(std::string *out, uint8_t **data, int start, int end,
                    int width) {
     out->reserve(width * (end - start) * 3 * 4);
     std::stringstream str;
     for (int row = start; row < end; row++) {
-        int coli = row * width * 3;
-        for (; coli < (row + 1) * width * 3 - 1; coli++) {
-            str << (int)data[coli] << ' ';
+        uint8_t *rowp = data[row];
+        int coli = 0;
+        for (; coli < width * 3 - 1; coli++) {
+            str << (int)rowp[coli] << ' ';
         }
-        str << (int)data[coli] << '\n';
+        str << (int)rowp[coli] << '\n';
         out->append(str.str());
         str.str(std::string());
         str.clear();
     }
 }
 
-void write_ppm(std::string filename, uint8_t *data, int width, int height) {
+void write_ppm(std::string filename, uint8_t **data, int width, int height) {
     std::ofstream outf;
     outf.open(filename, std::ofstream::out | std::ofstream::trunc);
 

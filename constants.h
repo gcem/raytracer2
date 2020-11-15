@@ -15,3 +15,9 @@
 
 // number of triangles
 #define BOX_MULTITHREAD_THRESHOLD 100
+
+// width should be a multiple of 16 on ineks to make use of 64-byte cache
+// lines.
+// height should be adjusted for locality.
+#define TILE_WIDTH 16
+#define TILE_HEIGHT 16
