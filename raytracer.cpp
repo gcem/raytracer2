@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         Ray *rays = new Ray[size];
         castRays(rays, camera);
 
-        std::thread renderers[8];
+        std::thread renderers[THREAD_CNT];
         std::atomic<int> nextTile;
         nextTile.store(0);
         int horizontalTiles = (camera.width + TILE_WIDTH - 1) / TILE_WIDTH;

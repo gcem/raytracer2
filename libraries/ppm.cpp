@@ -30,7 +30,7 @@ void write_ppm(std::string filename, uint8_t **data, int width, int height) {
     int part = (height + THREAD_CNT - 1) / THREAD_CNT;
 
     std::string buffers[THREAD_CNT * 2]; // align to 64 bytes
-    std::thread bufferWriters[8];
+    std::thread bufferWriters[THREAD_CNT];
 
     for (int i = 0; i < THREAD_CNT; i++) {
         bufferWriters[i] =
