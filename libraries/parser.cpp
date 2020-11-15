@@ -153,17 +153,16 @@ void Scene::loadFromXml(const std::string &filepath) {
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
         stream >> materialId;
-        mesh = new Mesh({}, materialId);
-        surfaces.push_back(mesh);
 
         child = element->FirstChildElement("Faces");
         stream << child->GetText() << std::endl;
+        std::vector<TriangleBase::Vertices> vertices;
         while (!(stream >> vid1).eof()) {
             stream >> vid2 >> vid3;
-            mesh->addFace(
+            vertices.push_back(
                 {vertex_data[vid1], vertex_data[vid2], vertex_data[vid3]});
         }
-        mesh->updateFaces();
+        surfaces.push_back(new Mesh(vertices, materialId));
         stream.clear();
         element = element->NextSiblingElement("Mesh");
     }

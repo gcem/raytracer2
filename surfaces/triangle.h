@@ -5,7 +5,12 @@
 class TriangleBase : public Surface {
 public:
     struct Vertices {
-        Vec3f va, vb, vc;
+        union {
+            struct {
+                Vec3f va, vb, vc;
+            };
+            Vec3f arr[3];
+        };
     };
 
     TriangleBase() {}
@@ -16,6 +21,7 @@ public:
     void normalAt(const Ray &ray, float t, Ray &out) override;
 
     Vertices v;
+
 protected:
     Vec3f normal, col1, col2;
     float area, detL;
@@ -26,6 +32,7 @@ public:
     Triangle(const Vertices &v, int materialId);
 
     int getMaterialId() const override;
+
 protected:
     int materialId;
 };
