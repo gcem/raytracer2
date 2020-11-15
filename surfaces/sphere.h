@@ -6,7 +6,7 @@ class Sphere : public Surface {
 public:
     Sphere(const Vec3f &center, float radius, int materialId);
     
-    float intersect(const Ray &ray, Ray &normalOut) override;
+    float intersect(const Ray &ray) override;
     
     int getMaterialId() const override;
 

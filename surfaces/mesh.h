@@ -8,7 +8,7 @@ class Mesh : public Surface {
 public:
     Mesh(const std::vector<Triangle::Vertices> &faces, int materialId);
 
-    float intersect(const Ray &ray, Ray &normalOut) override;
+    float intersect(const Ray &ray) override;
 
     int getMaterialId() const override;
 

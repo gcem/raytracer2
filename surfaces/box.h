@@ -8,7 +8,7 @@ public:
     BoundingBox() {}
     BoundingBox(const std::vector<Triangle::Vertices> &triangles);
 
-    float hit(const Ray &ray, Ray &normalOut);
+    float hit(const Ray &ray);
 
 protected:
     enum Axis { x = 0, y = 1, z = 2 };

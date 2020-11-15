@@ -1,40 +1,28 @@
-#include "trace.h"
 #include "constants.h"
+#include "trace.h"
 #include "parser.h"
+#include "surface.h"
 #include <cmath>
 
-// returned material id is 0 if there is no intersection. in that case, t
-// has no meaning
-// @returns { t, materialId }
-std::pair<float, int>
-closestIntersection(const Ray &ray, const std::vector<Surface *> &surfaces,
-                    Ray &normalOut) {
-    float mint = MAXFLOAT_CONST;
-    Ray normal;
-    int matId = 0;
+void closestIntersection(const Ray &ray,
+                         const std::vector<Surface *> &surfaces) {
+    t_minT = MAXFLOAT_CONST;
     for (auto surface : surfaces) {
-        float t = surface->intersect(ray, normal);
-        if (t > 0 && t < mint) {
-            normalOut = normal;
-            matId = surface->getMaterialId();
-            mint = t;
-        }
+        surface->intersect(ray);
     }
-    return {mint, matId};
 }
 
 Vec3f trace(const Ray &ray, int remainingReflections, Scene &scene) {
-    Ray normal;
-    auto closest = closestIntersection(ray, scene.surfaces, normal);
-    if (closest.second) {
-        auto &mat = scene.materials[closest.second];
-        return computeColor(ray, remainingReflections, scene, normal, mat);
-    }
-    return scene.background_color;
+    closestIntersection(ray, scene.surfaces);
+    if (t_minT < 0 || t_minT == MAXFLOAT_CONST)
+        return scene.background_color;
+
+    return computeColor(ray, remainingReflections, scene, t_normal,
+                        scene.materials[t_matId]);
 }
 
 Vec3f computeColor(const Ray &ray, int remainingReflections, Scene &scene,
-                   const Ray &normal, const Material &mat) {
+                   Ray normal, const Material &mat) {
     Vec3f color = mat.ambient * scene.ambient_light;
     if (mat.diffuse.x || mat.diffuse.y || mat.diffuse.z || mat.specular.x ||
         mat.specular.y || mat.specular.z)
@@ -52,10 +40,8 @@ Vec3f computeColor(const Ray &ray, int remainingReflections, Scene &scene,
             lightRay.origin =
                 normal.origin + lightRay.direction * scene.shadow_ray_epsilon;
 
-            Ray garbage;
-            auto closest =
-                closestIntersection(lightRay, scene.surfaces, garbage);
-            if (closest.second && closest.first < lightDistance)
+            closestIntersection(lightRay, scene.surfaces);
+            if (t_minT > 0 && t_minT < lightDistance)
                 continue; // there is a surface in-between
 
             color += light.intensity * mat.diffuse *

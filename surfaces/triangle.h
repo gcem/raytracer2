@@ -17,7 +17,7 @@ public:
     TriangleBase(const Vertices &v);
 
     // @returns -1 if no intersection, t otherwise
-    float intersect(const Ray &ray, Ray &normalOut) override;
+    float intersect(const Ray &ray) override;
 
     Vertices v;
 
@@ -29,6 +29,8 @@ protected:
 class Triangle : public TriangleBase {
 public:
     Triangle(const Vertices &v, int materialId);
+
+    float intersect(const Ray &ray) override;
 
     int getMaterialId() const override;
 

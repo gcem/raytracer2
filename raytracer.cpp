@@ -1,16 +1,16 @@
 #include "parser.h"
 #include "ppm.h"
-#include "ray.h"
-#include "trace.h"
-#include <chrono>
-#include <iostream>
-
 #include "constants.h"
 #include "ray.h"
-#include <thread>
 
-void render(Ray *rays, uint8_t *out, int count, Scene *scene,
-            int threadi) {
+#include "ray.h"
+#include "trace.h"
+
+#include <iostream>
+#include <thread>
+#include <chrono>
+
+void render(Ray *rays, uint8_t *out, int count, Scene *scene) {
     for (int i = 0, k = 0; i < count; i++) {
         auto color = trace(rays[i], scene->max_recursion_depth, *scene);
         out[k++] = color.x > 255 ? 255 : std::roundf(color.x);
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < THREAD_CNT; i++) {
             renderers[i] =
                 std::thread(render, rays + i * part, image + i * part * 3,
-                            std::min(part, size - i * part), &scene, i);
+                            std::min(part, size - i * part), &scene);
         }
 
         for (auto &thread : renderers) {
