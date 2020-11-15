@@ -10,6 +10,13 @@
 #include <atomic>
 #include <thread>
 
+/**
+ * note to my future self: I should actually have partitioned the space for
+ * triangles and spheres too. this code partitions meshes only.
+ *
+ * however, it is already 9 pm sunday and I am very tired :(
+ */
+
 void render(Ray *rays, uint8_t **out, Scene *scene, const int width,
             const int height, std::atomic<int> *nextTile, const int tileCount,
             const int horizontalTiles) {
@@ -26,7 +33,8 @@ void render(Ray *rays, uint8_t **out, Scene *scene, const int width,
 
         for (; line < lastLine; line++) {
             int rayi = line * width + firstCol;
-            for (int col = firstCol, k = firstCol * 3; col < lastCol; col++, rayi++) {
+            for (int col = firstCol, k = firstCol * 3; col < lastCol;
+                 col++, rayi++) {
                 auto color =
                     trace(rays[rayi], scene->max_recursion_depth, *scene);
                 out[line][k++] = color.x > 255 ? 255 : std::roundf(color.x);
@@ -45,8 +53,6 @@ int main(int argc, char *argv[]) {
     Scene scene;
 
     scene.loadFromXml(argv[1]);
-
-    auto afterload = std::chrono::system_clock::now();
 
     for (auto camera : scene.cameras) {
         int size = camera.width * camera.height;
@@ -73,16 +79,8 @@ int main(int argc, char *argv[]) {
         for (auto &thread : renderers) {
             thread.join();
         }
-
-        auto writeBegin = std::chrono::system_clock::now();
-        write_ppm("output/" + camera.image_name, // TODO: delete output/
+        write_ppm(camera.image_name, // TODO: delete output/
                   image, camera.width, camera.height);
-        auto writeEnd = std::chrono::system_clock::now();
-        std::cout << "Wrote: "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(
-                         writeEnd - writeBegin)
-                         .count()
-                  << "\n";
 
         for (int i = 0; i < camera.height; i++) {
             delete[] image[i];
@@ -93,15 +91,8 @@ int main(int argc, char *argv[]) {
 
     // TODO: delete
     auto end = std::chrono::system_clock::now();
-    int64_t loading = std::chrono::duration_cast<std::chrono::milliseconds>(
-                          afterload - start)
-                          .count();
-    int64_t rendering =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - afterload)
-            .count();
     int64_t milliseconds =
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
             .count();
-    std::cout << "Loading: " << loading << "\nRendering: " << rendering
-              << "\nTime: " << milliseconds << " milliseconds" << std::endl;
+    std::cout << "Time: " << milliseconds << " milliseconds" << std::endl;
 }
