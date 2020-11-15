@@ -46,9 +46,6 @@ void render(Ray *rays, uint8_t **out, Scene *scene, const int width,
 }
 
 int main(int argc, char *argv[]) {
-    // TODO: delete
-    auto start = std::chrono::system_clock::now();
-
     // Sample usage for reading an XML scene file
     Scene scene;
 
@@ -88,11 +85,4 @@ int main(int argc, char *argv[]) {
         delete[] image;
         delete[] rays;
     }
-
-    // TODO: delete
-    auto end = std::chrono::system_clock::now();
-    int64_t milliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-            .count();
-    std::cout << "Time: " << milliseconds << " milliseconds" << std::endl;
 }
