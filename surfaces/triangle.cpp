@@ -14,7 +14,7 @@ TriangleBase::TriangleBase(const Vertices &v) : v(v) {
 Triangle::Triangle(const Vertices &v, int materialId)
     : TriangleBase(v), materialId(materialId) {}
 
-float TriangleBase::intersect(const Ray &ray) {
+float TriangleBase::intersect(const Ray &ray, Ray &normalOut) {
     const Vec3f &col3 = ray.direction;
 
     Vec3f ve = v.va - ray.origin;
@@ -45,15 +45,13 @@ float TriangleBase::intersect(const Ray &ray) {
     if (t < TRIANGLE_EPSILON)
         return -1;
 
-    return t;
-}
-
-void TriangleBase::normalAt(const Ray &ray, float t, Ray &out) {
-    out.origin = ray.origin + ray.direction * t;
+    normalOut.origin = ray.origin + ray.direction * t;
     if (ray.direction.dot(normal) < 0)
-        out.direction = normal;
+        normalOut.direction = normal;
     else
-        out.direction = normal * -1;
+        normalOut.direction = normal * -1;
+    
+    return t;
 }
 
 int Triangle::getMaterialId() const {

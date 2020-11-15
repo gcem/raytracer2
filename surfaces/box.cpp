@@ -93,7 +93,7 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
     return;
 }
 
-float BoundingBox::hit(const Ray &ray) {
+float BoundingBox::hit(const Ray &ray, Ray &normalOut) {
     if (hasBox) {
         if (boxT(ray) == MAXFLOAT_CONST) // miss
             return -1;
@@ -101,85 +101,78 @@ float BoundingBox::hit(const Ray &ray) {
 
     // ray hit the box
 
+    Ray leftNormal, rightNormal;
+
     if (hasChildren) {
         // TODO: how do we return the normal???
 
         float leftT = left->boxT(ray);
         float rightT = right->boxT(ray);
+
         if (leftT == MAXFLOAT_CONST) {
             if (rightT == MAXFLOAT_CONST)
                 return -1;
 
             // hit right only
-            lastChild = right;
-            return right->hit(ray);
+            return right->hit(ray, normalOut);
         }
         if (rightT == MAXFLOAT_CONST) {
             // hit left only
-            lastChild = left;
-            return left->hit(ray);
+            return left->hit(ray, normalOut);
         }
         // hit both boxes. check the closest first, maybe we can avoid
         // checking the second box
         if (leftT < rightT) {
-            float leftHit = left->hit(ray);
+            float leftHit = left->hit(ray, leftNormal);
             if (leftHit > 0 && leftHit < rightT) {
-                lastChild = left;
+                normalOut = leftNormal;
                 return leftHit;
             }
-            float rightHit = right->hit(ray);
+            float rightHit = right->hit(ray, rightNormal);
             if (rightHit < 0) {
-                lastChild = left; // could be -1, no problem
+                normalOut = leftNormal;
                 return leftHit;
             }
             if (leftHit < 0 || rightHit < leftHit) {
-                lastChild = right;
+                normalOut = rightNormal;
                 return rightHit;
             }
-            lastChild = left;
+            normalOut = leftNormal;
             return leftHit;
         }
 
-        float rightHit = right->hit(ray);
+        float rightHit = right->hit(ray, rightNormal);
         if (rightHit > 0 && rightHit < leftT) {
-            lastChild = right;
+            normalOut = rightNormal;
             return rightHit;
         }
-        float leftHit = left->hit(ray);
+        float leftHit = left->hit(ray, leftNormal);
         if (leftHit < 0) {
-            lastChild = right; // could be -1, no problem
+            normalOut = rightNormal;
             return rightHit;
         }
         if (rightHit < 0 || leftHit < rightHit) {
-            lastChild = left;
+            normalOut = leftNormal;
             return leftHit;
         }
-        lastChild = right;
+        normalOut = rightNormal;
         return rightHit;
     }
 
     // we have triangles
 
     float minT = MAXFLOAT_CONST;
-    TriangleBase *closest = nullptr;
     for (auto &triangle : triangles) {
-        float t = triangle.intersect(ray);
+        float t = triangle.intersect(ray, leftNormal);
         if (t > 0 && t < minT) {
             minT = t;
-            closest = &triangle;
+            normalOut = leftNormal;
         }
     }
-    if (closest) {
-        lastTriangle = closest;
-        return minT;
+    if (minT == MAXFLOAT_CONST) {
+        return -1;
     }
-    return -1;
-}
-
-TriangleBase *BoundingBox::lastHit() {
-    if (hasChildren)
-        return lastChild->lastHit();
-    return lastTriangle;
+    return minT;
 }
 
 BoundingBox::Axis BoundingBox::chooseAxis() {

@@ -3,29 +3,31 @@
 #include "parser.h"
 #include <cmath>
 
-// returned surface is nullptr if there is no intersection. in that case, t
+// returned material id is 0 if there is no intersection. in that case, t
 // has no meaning
-std::pair<float, Surface *>
-closestIntersection(const Ray &ray, const std::vector<Surface *> &surfaces) {
-    Surface *closest = nullptr;
+// @returns { t, materialId }
+std::pair<float, int>
+closestIntersection(const Ray &ray, const std::vector<Surface *> &surfaces,
+                    Ray &normalOut) {
     float mint = MAXFLOAT_CONST;
+    Ray normal;
+    int matId = 0;
     for (auto surface : surfaces) {
-        float t = surface->intersect(ray);
+        float t = surface->intersect(ray, normal);
         if (t > 0 && t < mint) {
-            closest = surface;
+            normalOut = normal;
+            matId = surface->getMaterialId();
             mint = t;
         }
     }
-    return {mint, closest};
+    return {mint, matId};
 }
 
 Vec3f trace(const Ray &ray, int remainingReflections, Scene &scene) {
-    auto closest = closestIntersection(ray, scene.surfaces);
+    Ray normal;
+    auto closest = closestIntersection(ray, scene.surfaces, normal);
     if (closest.second) {
-        Surface *surface = closest.second;
-        Ray normal;
-        auto &mat = scene.materials[surface->getMaterialId()];
-        surface->normalAt(ray, closest.first, normal);
+        auto &mat = scene.materials[closest.second];
         return computeColor(ray, remainingReflections, scene, normal, mat);
     }
     return scene.background_color;
@@ -50,7 +52,9 @@ Vec3f computeColor(const Ray &ray, int remainingReflections, Scene &scene,
             lightRay.origin =
                 normal.origin + lightRay.direction * scene.shadow_ray_epsilon;
 
-            auto closest = closestIntersection(lightRay, scene.surfaces);
+            Ray garbage;
+            auto closest =
+                closestIntersection(lightRay, scene.surfaces, garbage);
             if (closest.second && closest.first < lightDistance)
                 continue; // there is a surface in-between
 

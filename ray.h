@@ -12,4 +12,4 @@ struct Ray {
     Vec3f direction;
 };
 
-void castRays(std::vector<Ray> &out, const Camera &camera);
+void castRays(Ray *out, const Camera &camera);

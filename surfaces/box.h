@@ -8,8 +8,7 @@ public:
     BoundingBox() {}
     BoundingBox(const std::vector<Triangle::Vertices> &triangles);
 
-    float hit(const Ray &ray);
-    TriangleBase *lastHit();
+    float hit(const Ray &ray, Ray &normalOut);
 
 protected:
     enum Axis { x = 0, y = 1, z = 2 };
@@ -20,12 +19,7 @@ protected:
     float boxT(const Ray &ray);
 
     Vec3f min, max;
-    Axis divisionAxis;
     bool hasBox, hasChildren;
     BoundingBox *left, *right;
     std::vector<TriangleBase> triangles;
-    union {
-        TriangleBase *lastTriangle;
-        BoundingBox *lastChild;
-    };
 };

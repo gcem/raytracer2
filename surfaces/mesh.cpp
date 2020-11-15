@@ -4,10 +4,8 @@
 Mesh::Mesh(const std::vector<TriangleBase::Vertices> &faces, int materialId)
     : materialId(materialId), box(faces) {}
 
-float Mesh::intersect(const Ray &ray) { return box.hit(ray); }
-
-void Mesh::normalAt(const Ray &ray, float t, Ray &out) {
-    box.lastHit()->normalAt(ray, t, out);
+float Mesh::intersect(const Ray &ray, Ray &normalOut) {
+    return box.hit(ray, normalOut);
 }
 
 int Mesh::getMaterialId() const { return materialId; }
