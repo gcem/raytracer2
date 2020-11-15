@@ -29,8 +29,15 @@ int main(int argc, char *argv[]) {
             image[k++] = color.y > 255 ? 255 : std::roundf(color.y);
             image[k++] = color.z > 255 ? 255 : std::roundf(color.z);
         }
+        auto writeBegin = std::chrono::system_clock::now();
         write_ppm("output/" + camera.image_name, image, camera.width,
                   camera.height);
+        auto writeEnd = std::chrono::system_clock::now();
+        std::cout << "Wrote: "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(
+                         writeEnd - writeBegin)
+                         .count()
+                  << "\n";
         delete[] image;
     }
 
