@@ -104,8 +104,6 @@ float BoundingBox::hit(const Ray &ray, Ray &normalOut) {
     Ray leftNormal, rightNormal;
 
     if (hasChildren) {
-        // TODO: how do we return the normal???
-
         float leftT = left->boxT(ray);
         float rightT = right->boxT(ray);
 

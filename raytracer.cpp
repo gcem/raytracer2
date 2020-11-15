@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
         for (auto &thread : renderers) {
             thread.join();
         }
-        write_ppm(camera.image_name, // TODO: delete output/
+        write_ppm(camera.image_name,
                   image, camera.width, camera.height);
 
         for (int i = 0; i < camera.height; i++) {
