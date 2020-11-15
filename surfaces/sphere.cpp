@@ -3,7 +3,7 @@
 Sphere::Sphere(const Vec3f &center, float radius, int materialId)
     : center(center), radius(radius), materialId(materialId) {}
 
-float Sphere::intersect(const Ray &ray) {
+float Sphere::intersect(const Ray &ray, Ray &normalOut) {
     auto centerPos = center - ray.origin;
     if (centerPos.dot(ray.direction) < 0)
         return -1;
@@ -13,13 +13,13 @@ float Sphere::intersect(const Ray &ray) {
     if (perpRadius > radius)
         return -1;
 
-    return centerDirection.dot(ray.direction) * centerDist -
+    float t = centerDirection.dot(ray.direction) * centerDist -
            sqrt(radius * radius - perpRadius * perpRadius);
-}
+    
+    normalOut.origin = ray.origin + ray.direction * t;
+    normalOut.direction = (normalOut.origin - center).normalize();
 
-void Sphere::normalAt(const Ray &ray, float t, Ray &out) {
-    out.origin = ray.origin + ray.direction * t;
-    out.direction = (out.origin - center).normalize();
+    return t;
 }
 
 int Sphere::getMaterialId() const {

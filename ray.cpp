@@ -1,7 +1,6 @@
 #include "ray.h"
 
-void castRays(std::vector<Ray> &out, const Camera &camera) {
-    out.resize(camera.width * camera.height);
+void castRays(Ray *out, const Camera &camera) {
     Vec3f right = camera.gaze.cross(camera.up).normalize();
     Vec3f up = camera.up.normalize();
     Vec3f leftdir = camera.gaze * camera.near_distance +
