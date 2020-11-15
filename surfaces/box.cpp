@@ -1,5 +1,6 @@
 #include "box.h"
 #include "constants.h"
+#include <thread>
 
 BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
     hasBox = false;
@@ -68,10 +69,21 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
         if (leftvert.size() == vertices.size() ||
             rightvert.size() == vertices.size()) // this axis failed
             continue;
-        
+
         hasChildren = true;
-        left = new BoundingBox(leftvert);
-        right = new BoundingBox(rightvert);
+
+        if (leftvert.size() >= BOX_MULTITHREAD_THRESHOLD &&
+            rightvert.size() >= BOX_MULTITHREAD_THRESHOLD) {
+            std::thread leftThread(
+                [&]() { left = new BoundingBox(leftvert); });
+            std::thread rightThread(
+                [&]() { right = new BoundingBox(rightvert); });
+            leftThread.join();
+            rightThread.join();
+        } else {
+            left = new BoundingBox(leftvert);
+            right = new BoundingBox(rightvert);
+        }
         return;
     }
 
