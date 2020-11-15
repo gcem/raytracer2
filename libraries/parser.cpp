@@ -2,6 +2,7 @@
 #include "tinyxml2.h"
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 void Scene::loadFromXml(const std::string &filepath) {
     tinyxml2::XMLDocument file;
@@ -149,6 +150,7 @@ void Scene::loadFromXml(const std::string &filepath) {
     element = root->FirstChildElement("Objects");
     element = element->FirstChildElement("Mesh");
     Mesh *mesh;
+    std::vector<std::thread> meshThreads;
     while (element) {
         child = element->FirstChildElement("Material");
         stream << child->GetText() << std::endl;
@@ -156,13 +158,20 @@ void Scene::loadFromXml(const std::string &filepath) {
 
         child = element->FirstChildElement("Faces");
         stream << child->GetText() << std::endl;
-        std::vector<TriangleBase::Vertices> vertices;
+        auto *vertices = new std::vector<TriangleBase::Vertices>();
         while (!(stream >> vid1).eof()) {
             stream >> vid2 >> vid3;
-            vertices.push_back(
+            vertices->push_back(
                 {vertex_data[vid1], vertex_data[vid2], vertex_data[vid3]});
         }
-        surfaces.push_back(new Mesh(vertices, materialId));
+        surfaces.push_back(nullptr);
+        meshThreads.push_back(std::thread(
+            [](std::vector<TriangleBase::Vertices> *vertices, int materialId,
+               std::vector<Surface *> *surfaces, int surfaceIndex) {
+                (*surfaces)[surfaceIndex] = new Mesh(*vertices, materialId);
+                delete vertices;
+            },
+            vertices, materialId, &surfaces, (int)(surfaces.size() - 1)));
         stream.clear();
         element = element->NextSiblingElement("Mesh");
     }
@@ -208,4 +217,7 @@ void Scene::loadFromXml(const std::string &filepath) {
         surfaces.push_back(new Sphere(vertex_data[vid1], radius, materialId));
         element = element->NextSiblingElement("Sphere");
     }
+
+    for (auto &thread : meshThreads)
+        thread.join();
 }
