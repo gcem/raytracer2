@@ -3,6 +3,6 @@
 
 #include <string>
 
-void write_ppm(std::string filename, uint8_t **data, int width, int height);
+void write_ppm_header(std::string filename, int width, int height);
 
 #endif // __ppm_h__

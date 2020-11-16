@@ -8,6 +8,8 @@
 #include "constants.h"
 #include "ray.h"
 #include <atomic>
+#include <fstream>
+#include <mutex>
 #include <thread>
 
 /**
@@ -17,31 +19,46 @@
  * however, it is already 9 pm sunday and I am very tired :(
  */
 
-void render(Ray *rays, uint8_t **out, Scene *scene, const int width,
-            const int height, std::atomic<int> *nextTile, const int tileCount,
-            const int horizontalTiles) {
-    int tile;
-    for (;;) {
-        tile = (*nextTile)++;
-        if (tile >= tileCount)
-            return;
-        int firstCol = (tile % horizontalTiles) * TILE_WIDTH;
-        int lastCol = std::min((tile % horizontalTiles + 1) * TILE_WIDTH,
-                               width); // exclusive
-        int line = (tile / horizontalTiles) * TILE_HEIGHT;
-        int lastLine = std::min(line + TILE_HEIGHT, height);
+std::mutex writeFile;
+int nextLine = 0;
+extern std::ofstream outf;
 
-        for (; line < lastLine; line++) {
-            int rayi = line * width + firstCol;
-            for (int col = firstCol, k = firstCol * 3; col < lastCol;
-                 col++, rayi++) {
-                auto color =
-                    trace(rays[rayi], scene->max_recursion_depth, *scene);
-                out[line][k++] = color.x > 255 ? 255 : std::roundf(color.x);
-                out[line][k++] = color.y > 255 ? 255 : std::roundf(color.y);
-                out[line][k++] = color.z > 255 ? 255 : std::roundf(color.z);
-            }
+void writeLines(uint8_t *out, int height, int width, bool *ready) {
+    for (; nextLine < height; nextLine++) {
+        int k = nextLine * width * 3;
+        for (; k < width * 3; k++) {
+            outf << (int)out[k] << ' ';
         }
+        outf << '\n';
+    }
+}
+
+void tryWriteLines(uint8_t *out, int height, int width, bool *ready) {
+    if (writeFile.try_lock()) {
+        for (; nextLine < height && ready[nextLine]; nextLine++) {
+            int k = nextLine * width * 3;
+            for (; k < (nextLine + 1) * width * 3; k++) {
+                outf << (int)out[k] << ' ';
+            }
+            outf << '\n';
+        }
+        writeFile.unlock();
+    }
+}
+
+void render(Ray *rays, uint8_t *out, Scene *scene, const int width,
+            const int height, int firstLine, bool *ready) {
+    for (int line = firstLine; line < height; line += THREAD_CNT) {
+        int rayi = line * width;
+        for (int col = 0, k = rayi * 3; col < width; col++, rayi++) {
+            auto color =
+                trace(rays[rayi], scene->max_recursion_depth, *scene);
+            out[k++] = color.x > 255 ? 255 : std::roundf(color.x);
+            out[k++] = color.y > 255 ? 255 : std::roundf(color.y);
+            out[k++] = color.z > 255 ? 255 : std::roundf(color.z);
+        }
+        ready[line] = true;
+        tryWriteLines(out, height, width, ready);
     }
 }
 
@@ -56,35 +73,30 @@ int main(int argc, char *argv[]) {
 
     for (auto camera : scene.cameras) {
         int size = camera.width * camera.height;
-        uint8_t **image = new uint8_t *[camera.height];
-        for (int i = 0; i < camera.height; i++) {
-            image[i] = new uint8_t[camera.width * 3];
-        }
+        uint8_t *image = new uint8_t[size * 3];
+        bool *ready = new bool[camera.height]{};
 
         Ray *rays = new Ray[size];
         castRays(rays, camera);
 
         std::thread renderers[THREAD_CNT];
-        std::atomic<int> nextTile;
-        nextTile.store(0);
-        int horizontalTiles = (camera.width + TILE_WIDTH - 1) / TILE_WIDTH;
-        int verticalTiles = (camera.height + TILE_HEIGHT - 1) / TILE_HEIGHT;
+
+        write_ppm_header(camera.image_name, camera.width, camera.height);
+        nextLine = 0;
 
         for (int i = 0; i < THREAD_CNT; i++) {
-            renderers[i] = std::thread(
-                render, rays, image, &scene, camera.width, camera.height,
-                &nextTile, horizontalTiles * verticalTiles, horizontalTiles);
+            renderers[i] = std::thread(render, rays, image, &scene,
+                                       camera.width, camera.height, i, ready);
         }
 
         for (auto &thread : renderers) {
             thread.join();
         }
-        write_ppm(camera.image_name,
-                  image, camera.width, camera.height);
 
-        for (int i = 0; i < camera.height; i++) {
-            delete[] image[i];
-        }
+        writeLines(image, camera.height, camera.width, ready);
+        outf.close();
+
+        delete[] ready;
         delete[] image;
         delete[] rays;
     }

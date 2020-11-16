@@ -4,6 +4,8 @@
 #include <sstream>
 #include <thread>
 
+std::ofstream outf;
+
 void writeToBuffer(std::string *out, uint8_t **data, int start, int end,
                    int width) {
     out->reserve(width * (end - start) * 3 * 4);
@@ -21,26 +23,8 @@ void writeToBuffer(std::string *out, uint8_t **data, int start, int end,
     }
 }
 
-void write_ppm(std::string filename, uint8_t **data, int width, int height) {
-    std::ofstream outf;
+void write_ppm_header(std::string filename, int width, int height) {
     outf.open(filename, std::ofstream::out | std::ofstream::trunc);
 
     outf << "P3\n" << width << ' ' << height << "\n255\n";
-
-    int part = (height + THREAD_CNT - 1) / THREAD_CNT;
-
-    std::string buffers[THREAD_CNT * 2]; // align to 64 bytes
-    std::thread bufferWriters[THREAD_CNT];
-
-    for (int i = 0; i < THREAD_CNT; i++) {
-        bufferWriters[i] =
-            std::thread(writeToBuffer, buffers + (i << 1), data, i * part,
-                        std::min((i + 1) * part, height), width);
-    }
-    for (int i = 0; i < THREAD_CNT; i++) {
-        bufferWriters[i].join();
-        outf << buffers[i << 1];
-    }
-
-    outf.close();
 }
