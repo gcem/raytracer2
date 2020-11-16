@@ -45,10 +45,23 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
         return;
     }
 
-    // divide to left and right boxes
-    int divisionAxis = chooseAxis();
+    float diffs[]{ max.x - min.x, max.y - min.y, max.z - min.z };
+    int axisOrder[]{ 0, 1, 2 };
+    if (diffs[1] > diffs[0]) {
+        std::swap(diffs[0], diffs[1]);
+        std::swap(axisOrder[0], axisOrder[1]);
+    }
+    if (diffs[2] > diffs[1]) {
+        std::swap(diffs[2], diffs[1]);
+        std::swap(axisOrder[2], axisOrder[1]);
+    }
+    if (diffs[1] > diffs[0]) {
+        std::swap(diffs[0], diffs[1]);
+        std::swap(axisOrder[0], axisOrder[1]);
+    }
+
     for (int i = 0; i < 3; i++) {
-        divisionAxis = (divisionAxis + i) % 3;
+        int divisionAxis = axisOrder[i];
 
         float middle = (min.arr[divisionAxis] + max.arr[divisionAxis]) / 2;
         std::vector<Triangle::Vertices> leftvert, rightvert;
@@ -174,12 +187,6 @@ float BoundingBox::hit(const Ray &ray, Ray &normalOut) {
 }
 
 BoundingBox::Axis BoundingBox::chooseAxis() {
-    float dx = max.x - min.x, dy = max.y - min.y, dz = max.z - min.z;
-    if (dx > dy && dx > dz)
-        return Axis::x;
-    if (dy > dz)
-        return Axis::y;
-    return Axis::z;
 }
 
 float BoundingBox::boxT(const Ray &ray) {
