@@ -203,3 +203,40 @@ float BoundingBox::boxT(const Ray &ray) {
         return MAXFLOAT_CONST;
     return tlow;
 }
+
+bool BoundingBox::intersectsBefore(const Ray &ray, float maxt) {
+    if (hasBox) {
+        if (boxT(ray) >  maxt) // miss
+            return false;
+    }
+
+    // ray hit the box
+    if (hasChildren) {
+        float leftT = left->boxT(ray);
+        float rightT = right->boxT(ray);
+
+        if (leftT > maxt) {
+            if (rightT > maxt)
+                return false;
+
+            // hit right only
+            return right->intersectsBefore(ray, maxt);
+        }
+        if (rightT > maxt) {
+            // hit left only
+            return left->intersectsBefore(ray, maxt);
+        }
+
+        // hit both boxes. check the closest first, maybe we can avoid
+        // checking the second box
+        return right->intersectsBefore(ray, maxt) || left->intersectsBefore(ray, maxt);
+    }
+
+    // we have triangles
+
+    for (auto &triangle : triangles) {
+        if (triangle.intersectsBefore(ray, maxt))
+            return true;
+    }
+    return false;
+}

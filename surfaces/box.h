@@ -10,6 +10,8 @@ public:
 
     float hit(const Ray &ray, Ray &normalOut);
 
+    bool intersectsBefore(const Ray &ray, float t);
+
 protected:
     enum Axis { x = 0, y = 1, z = 2 };
 

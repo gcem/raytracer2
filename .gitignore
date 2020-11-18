@@ -1,3 +1,6 @@
 input
 output
 raytracer
+*.svg
+*.ppm
+*.png

@@ -9,6 +9,8 @@ public:
     Mesh(const std::vector<Triangle::Vertices> &faces, int materialId);
 
     float intersect(const Ray &ray, Ray &normalOut) override;
+    
+    bool intersectsBefore(const Ray &ray, float t) override;
 
     int getMaterialId() const override;
 

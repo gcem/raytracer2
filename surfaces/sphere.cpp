@@ -25,3 +25,17 @@ float Sphere::intersect(const Ray &ray, Ray &normalOut) {
 int Sphere::getMaterialId() const {
     return materialId;    
 }
+
+bool Sphere::intersectsBefore(const Ray &ray, float maxt) {
+    auto centerPos = center - ray.origin;
+    if (centerPos.dot(ray.direction) < 0)
+        return false;
+    float centerDist = centerPos.norm();
+    auto centerDirection = centerPos * (1 / centerDist);
+    float perpRadius = ray.direction.sine(centerDirection) * centerDist;
+    if (perpRadius > radius)
+        return false;
+    float t = centerDirection.dot(ray.direction) * centerDist -
+           sqrt(radius * radius - perpRadius * perpRadius);
+    return t > 0 && t < maxt;
+}

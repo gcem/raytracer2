@@ -23,6 +23,14 @@ closestIntersection(const Ray &ray, const std::vector<Surface *> &surfaces,
     return {mint, matId};
 }
 
+bool intersectsBefore(const Ray &ray, const std::vector<Surface *> &surfaces, float t) {
+    for (auto surface : surfaces) {
+        if (surface->intersectsBefore(ray, t))
+            return true;
+    }
+    return false;
+}
+
 Vec3f trace(const Ray &ray, int remainingReflections, Scene &scene) {
     Ray normal;
     auto closest = closestIntersection(ray, scene.surfaces, normal);
@@ -52,10 +60,7 @@ Vec3f computeColor(const Ray &ray, int remainingReflections, Scene &scene,
             lightRay.origin =
                 normal.origin + lightRay.direction * scene.shadow_ray_epsilon;
 
-            Ray garbage;
-            auto closest =
-                closestIntersection(lightRay, scene.surfaces, garbage);
-            if (closest.second && closest.first < lightDistance)
+            if (intersectsBefore(lightRay, scene.surfaces, lightDistance))
                 continue; // there is a surface in-between
 
             color += light.intensity * mat.diffuse *
