@@ -19,6 +19,8 @@ public:
     // @returns -1 if no intersection, t otherwise
     float intersect(const Ray &ray, Ray &normalOut) override;
 
+    bool intersectsBefore(const Ray &ray, float t) override;
+
     Vertices v;
 
 protected:

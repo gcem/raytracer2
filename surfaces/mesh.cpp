@@ -9,3 +9,7 @@ float Mesh::intersect(const Ray &ray, Ray &normalOut) {
 }
 
 int Mesh::getMaterialId() const { return materialId; }
+
+bool Mesh::intersectsBefore(const Ray &ray, float t) {
+    return box.intersectsBefore(ray, t);    
+}
