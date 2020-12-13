@@ -7,6 +7,8 @@
 #include "mesh.h"
 #include "camera.h"
 #include "vector.h"
+#include "texture.h"
+#include "transformation.h"
 
 #include <cmath>
 #include <string>
@@ -38,12 +40,8 @@ struct Scene {
     std::vector<PointLight> point_lights;
     std::vector<Material> materials;
     std::vector<Vec3f> vertex_data;
-    /*
-    std::vector<Mesh> meshes;
-    std::vector<Triangle> triangles;
-    std::vector<Sphere> spheres;
-    */
     std::vector<Surface*> surfaces;
+    std::vector<Texture> textures;
 
     // Functions
     void loadFromXml(const std::string &filepath);

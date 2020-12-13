@@ -1,4 +1,7 @@
 input
+newinput
+oldinput
+textures
 output
 raytracer
 *.svg

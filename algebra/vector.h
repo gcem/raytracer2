@@ -10,10 +10,7 @@ struct Vec3f {
         float arr[3];
     };
 
-    Vec3f
-    operator*(float f) const {
-        return Vec3f{x * f, y * f, z * f};
-    }
+    Vec3f operator*(float f) const { return Vec3f{x * f, y * f, z * f}; }
 
     Vec3f operator*(const Vec3f &v) const {
         return Vec3f{x * v.x, y * v.y, z * v.z};
@@ -81,4 +78,13 @@ struct Vec4f {
             float left, right, bottom, top;
         };
     };
+
+    Vec4f() {}
+    Vec4f(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+
+    Vec4f(Vec3f v, float last) : x(v.x), y(v.y), z(v.z), w(last) {}
+
+    operator Vec3f() {
+        return {x / w, y / w, z / w};
+    }
 };

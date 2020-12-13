@@ -1,5 +1,9 @@
 #include "parser.h"
+#include "rotate.h"
+#include "scale.h"
 #include "tinyxml2.h"
+#include "translate.h"
+
 #include <sstream>
 #include <stdexcept>
 #include <thread>
@@ -73,6 +77,7 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream >> camera.near_distance;
         stream >> camera.width >> camera.height;
         stream >> camera.image_name;
+        camera.image_name = "outputs/" + camera.image_name;
 
         cameras.push_back(camera);
         element = element->NextSiblingElement("Camera");
@@ -114,8 +119,6 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         child = element->FirstChildElement("SpecularReflectance");
         stream << child->GetText() << std::endl;
-        child = element->FirstChildElement("MirrorReflectance");
-        stream << child->GetText() << std::endl;
         child = element->FirstChildElement("PhongExponent");
         stream << child->GetText() << std::endl;
 
@@ -125,8 +128,15 @@ void Scene::loadFromXml(const std::string &filepath) {
             material.diffuse.z;
         stream >> material.specular.x >> material.specular.y >>
             material.specular.z;
-        stream >> material.mirror.x >> material.mirror.y >> material.mirror.z;
         stream >> material.phong_exponent;
+
+        child = element->FirstChildElement("MirrorReflectance");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> material.mirror.x >> material.mirror.y >>
+                material.mirror.z;
+        } else
+            material.mirror = {0, 0, 0};
 
         materials.push_back(material);
         element = element->NextSiblingElement("Material");
@@ -145,6 +155,44 @@ void Scene::loadFromXml(const std::string &filepath) {
 
     int materialId;
     int vid1, vid2, vid3;
+
+    // Get Transformations
+    std::vector<Translate> translate(1); // make one-indexed
+    std::vector<Scale> scale(1);
+    std::vector<Rotate> rotate(1);
+
+    element = root->FirstChildElement("Transformations");
+
+    if (element) {
+        child = element->FirstChildElement();
+
+        while (child) {
+            const char *tagName = child->Name();
+
+            if (!strcmp(tagName, "Translation")) {
+                float dx, dy, dz;
+                stream << child->GetText() << std::endl;
+                stream >> dx >> dy >> dz;
+
+                translate.push_back(Translate(dx, dy, dz));
+            } else if (!strcmp(tagName, "Scaling")) {
+                float sx, sy, sz;
+                stream << child->GetText() << std::endl;
+                stream >> sx >> sy >> sz;
+
+                scale.push_back(Scale(sx, sy, sz));
+            } else if (!strcmp(tagName, "Rotation")) {
+                float angle, x, y, z;
+
+                stream << child->GetText() << std::endl;
+                stream >> angle >> x >> y >> z;
+
+                rotate.push_back(Rotate(angle, {x, y, z}));
+            }
+
+            child = child->NextSiblingElement();
+        }
+    }
 
     // Get Meshes
     element = root->FirstChildElement("Objects");
