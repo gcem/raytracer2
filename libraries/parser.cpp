@@ -77,7 +77,7 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream >> camera.near_distance;
         stream >> camera.width >> camera.height;
         stream >> camera.image_name;
-        camera.image_name = "output/" + camera.image_name;
+        camera.image_name = camera.image_name;
 
         cameras.push_back(camera);
         element = element->NextSiblingElement("Camera");
