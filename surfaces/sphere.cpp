@@ -17,7 +17,7 @@ float Sphere::intersect(const Ray &ray, Ray &normalOut) {
            sqrt(radius * radius - perpRadius * perpRadius);
     
     normalOut.origin = ray.origin + ray.direction * t;
-    normalOut.direction = (normalOut.origin - center).normalize();
+    normalOut.direction = (normalOut.origin - center) * (1 / radius);
 
     return t;
 }
