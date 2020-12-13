@@ -1,7 +1,9 @@
 #include "sphere.h"
 
-Sphere::Sphere(const Vec3f &center, float radius, int materialId)
-    : center(center), radius(radius), materialId(materialId) {}
+Sphere::Sphere(const Vec3f &center, float radius, int materialId,
+               int textureId)
+    : center(center), radius(radius), materialId(materialId),
+      textureId(textureId) {}
 
 float Sphere::intersect(const Ray &ray, Ray &normalOut) {
     auto centerPos = center - ray.origin;
@@ -14,16 +16,12 @@ float Sphere::intersect(const Ray &ray, Ray &normalOut) {
         return -1;
 
     float t = centerDirection.dot(ray.direction) * centerDist -
-           sqrt(radius * radius - perpRadius * perpRadius);
-    
+              sqrt(radius * radius - perpRadius * perpRadius);
+
     normalOut.origin = ray.origin + ray.direction * t;
     normalOut.direction = (normalOut.origin - center) * (1 / radius);
 
     return t;
-}
-
-int Sphere::getMaterialId() const {
-    return materialId;    
 }
 
 bool Sphere::intersectsBefore(const Ray &ray, float maxt) {
@@ -36,6 +34,6 @@ bool Sphere::intersectsBefore(const Ray &ray, float maxt) {
     if (perpRadius > radius)
         return false;
     float t = centerDirection.dot(ray.direction) * centerDist -
-           sqrt(radius * radius - perpRadius * perpRadius);
+              sqrt(radius * radius - perpRadius * perpRadius);
     return t > 0 && t < maxt;
 }

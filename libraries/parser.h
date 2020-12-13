@@ -39,7 +39,6 @@ struct Scene {
     Vec3f ambient_light;
     std::vector<PointLight> point_lights;
     std::vector<Material> materials;
-    std::vector<Vec3f> vertex_data;
     std::vector<Surface*> surfaces;
     std::vector<Texture> textures;
 

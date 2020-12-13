@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/raytracer",
             "args": [
-                "input/horse_and_mug.xml"
+                "newinput/simple_texture.xml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

@@ -6,9 +6,12 @@
 class BoundingBox {
 public:
     BoundingBox() {}
-    BoundingBox(const std::vector<Triangle::Vertices> &triangles);
+    BoundingBox(const std::vector<Triangle::Vertices> &triangles,
+                const std::vector<TexturedTriangle::TextureCoordinates>
+                    texCoords = {});
 
     float hit(const Ray &ray, Ray &normalOut);
+    float hit(const Ray &ray, Ray &normalOut, Vec2f &texCoordOut);
 
     bool intersectsBefore(const Ray &ray, float t);
 
@@ -24,4 +27,5 @@ protected:
     bool hasBox, hasChildren;
     BoundingBox *left, *right;
     std::vector<TriangleBase> triangles;
+    std::vector<TexturedTriangleBase> texturedTriangles;
 };

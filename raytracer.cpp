@@ -10,13 +10,6 @@
 #include <atomic>
 #include <thread>
 
-/**
- * note to my future self: I should actually have partitioned the space for
- * triangles and spheres too. this code partitions meshes only.
- *
- * however, it is already 9 pm sunday and I am very tired :(
- */
-
 void render(Ray *rays, uint8_t **out, Scene *scene, const int width,
             const int height, std::atomic<int> *nextTile, const int tileCount,
             const int horizontalTiles) {

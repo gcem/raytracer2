@@ -1,3 +1,5 @@
+#pragma once
+
 #include "vector.h"
 
 // {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
@@ -16,9 +18,15 @@ public:
     Mat4 operator*(const Mat4 &other) const;
     Vec4f operator*(const Vec4f &vec) const;
 
-    Mat4 inverse() const;
+    // uses gaussian elimination
+    Mat4 inverse() const; // realized after implementing, this is not used :(
     Mat4 transpose() const;
+
+    // @param rowIndex zero-indexed
+    const Vec4f &operator[](int rowIndex) const;
 
 protected:
     Vec4f rows[4];
+
+    Vec4f column(int colIndex) const;
 };
