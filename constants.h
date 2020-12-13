@@ -11,7 +11,7 @@
 #define TRIANGLE_EPSILON 0.00001f
 
 // we could check the hardware in runtime but this is ok for ineks
-#define THREAD_CNT 1
+#define THREAD_CNT 8
 
 // number of triangles
 #define BOX_MULTITHREAD_THRESHOLD 200
