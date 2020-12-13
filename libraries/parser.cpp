@@ -188,9 +188,11 @@ void Scene::loadFromXml(const std::string &filepath) {
             child = element->FirstChildElement("Interpolation");
             text = child->GetText();
             if (text.compare("nearest") == 0) {
-                textures.back().setInterpolation(Texture::Interpolation::Nearest);
+                textures.back().setInterpolation(
+                    Texture::Interpolation::Nearest);
             } else {
-                textures.back().setInterpolation(Texture::Interpolation::Bilinear);
+                textures.back().setInterpolation(
+                    Texture::Interpolation::Bilinear);
             }
 
             child = element->FirstChildElement("Appearance");
@@ -335,7 +337,8 @@ void Scene::loadFromXml(const std::string &filepath) {
                         new Mesh(*vertices, materialId);
                 delete vertices;
             },
-            vertices, materialId, textureId, texCoords, &surfaces, (int)(surfaces.size() - 1)));
+            vertices, materialId, textureId, texCoords, &surfaces,
+            (int)(surfaces.size() - 1)));
         stream.clear();
         element = element->NextSiblingElement("Mesh");
     }
@@ -421,6 +424,15 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         stream >> radius;
 
+        int texId = 0;
+        child = element->FirstChildElement("Texture");
+        Vec3f up, right;
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> texId;
+            up = {0, 1, 0};
+            right = {1, 0, 0};
+        }
         // sphere-specific transformations
         Transformation tfm;
         child = element->FirstChildElement("Transformations");
@@ -438,7 +450,10 @@ void Scene::loadFromXml(const std::string &filepath) {
                 case 'r':
                     stream >> i;
                     tfm = rotate[i] * tfm;
-                    // TODO: rotate texture axes
+                    if (texId) {
+                        up = rotate[i](up);
+                        right = rotate[i](right);
+                    }
                     break;
                 case 's':
                     stream >> i;
@@ -450,9 +465,13 @@ void Scene::loadFromXml(const std::string &filepath) {
             }
             stream.clear(); // reset EOF flag
         }
-
-        surfaces.push_back(
-            new Sphere(tfm(vertex_data[vid1]), radius, materialId));
+        if (texId)
+            surfaces.push_back(
+                new TexturedSphere(tfm(vertex_data[vid1]), radius, materialId,
+                                   texId, up, right));
+        else
+            surfaces.push_back(
+                new Sphere(tfm(vertex_data[vid1]), radius, materialId));
         element = element->NextSiblingElement("Sphere");
     }
 
