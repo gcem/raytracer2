@@ -57,6 +57,8 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "condition_variable": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "optional": "cpp",
+        "string_view": "cpp"
     }
 }

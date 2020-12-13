@@ -11,6 +11,8 @@ public:
             };
             Vec3f arr[3];
         };
+        Vec3f &operator[](int i) { return arr[i]; }
+        Vec3f operator[](int i) const { return arr[i]; }
     };
 
     TriangleBase() {}
@@ -20,7 +22,6 @@ public:
     float intersect(const Ray &ray, Ray &normalOut) override;
 
     bool intersectsBefore(const Ray &ray, float t) override;
-
     Vertices v;
 
 protected:
@@ -28,7 +29,22 @@ protected:
     float area, detL;
 };
 
-class Triangle : public TriangleBase {
+class TexturedTriangleBase : public virtual TriangleBase {
+public:
+    struct TextureCoordinates {
+        Vec2f va, vb, vc;
+    };
+
+    TexturedTriangleBase(const Vertices &v, const TextureCoordinates &t);
+
+    float intersect(const Ray &ray, Ray &normalOut,
+                    Vec2f &texCoordOut) override;
+
+protected:
+    TextureCoordinates texCoord;
+};
+
+class Triangle : public virtual TriangleBase {
 public:
     Triangle(const Vertices &v, int materialId);
 
@@ -36,4 +52,16 @@ public:
 
 protected:
     int materialId;
+};
+
+class TexturedTriangle : public virtual TexturedTriangleBase,
+                         public virtual Triangle {
+public:
+    TexturedTriangle(const Vertices &v, int materialId, int textureId,
+                     const TextureCoordinates &t);
+
+    int getTextureId() const override { return textureId; }
+
+protected:
+    int textureId;
 };

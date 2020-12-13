@@ -4,9 +4,12 @@
 #include "ray.h"
 #include <vector>
 
-std::pair<float, int>
-closestIntersection(const Ray &ray, const std::vector<Surface *> &surfaces,
-                    Ray &normalOut);
+struct IntersectionResult {
+    // has no meaning if matId = 0
+    float t;
+    int matId;
+    int texId;
+    Vec2f texCoord;
+};
+
 Vec3f trace(const Ray &ray, int remainingReflections, Scene &scene);
-Vec3f computeColor(const Ray &ray, int remainingReflections, Scene &scene,
-                   const Ray &normal, const Material &mat);

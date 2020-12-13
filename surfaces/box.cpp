@@ -2,13 +2,20 @@
 #include "constants.h"
 #include <thread>
 
-BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
+BoundingBox::BoundingBox(
+    const std::vector<Triangle::Vertices> &vertices,
+    const std::vector<TexturedTriangle::TextureCoordinates> texCoords) {
     hasBox = false;
     hasChildren = false;
 
     if (vertices.size() <= BRUTEFORCE_THRESHOLD) {
-        for (auto &tri : vertices)
-            triangles.push_back(TriangleBase(tri));
+        if (texCoords.size()) {
+            for (int i = 0; i < texCoords.size(); i++)
+                texturedTriangles.push_back(
+                    TexturedTriangleBase(vertices[i], texCoords[i]));
+        } else
+            for (auto &tri : vertices)
+                triangles.push_back(TriangleBase(tri));
         return;
     }
 
@@ -40,8 +47,13 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
     }
 
     if (vertices.size() <= SUBDIVISION_THRESHOLD) {
-        for (auto &tri : vertices)
-            triangles.push_back(TriangleBase(tri));
+        if (texCoords.size()) {
+            for (int i = 0; i < texCoords.size(); i++)
+                texturedTriangles.push_back(
+                    TexturedTriangleBase(vertices[i], texCoords[i]));
+        } else
+            for (auto &tri : vertices)
+                triangles.push_back(TriangleBase(tri));
         return;
     }
 
@@ -50,21 +62,42 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
     for (int i = 0; i < 3; i++) {
         divisionAxis = (divisionAxis + i) % 3;
 
-        float middle = (min.arr[divisionAxis] + max.arr[divisionAxis]) / 2;
+        float middle = (min[divisionAxis] + max[divisionAxis]) / 2;
         std::vector<Triangle::Vertices> leftvert, rightvert;
-        for (auto &v : vertices) {
-            bool toLeft = false, toRight = false;
-            for (int vi = 0; vi < 3; vi++) {
-                if (v.arr[vi].arr[divisionAxis] <= middle)
-                    toLeft = true;
-                if (v.arr[vi].arr[divisionAxis] >= middle) // equal: both
-                    toRight = true;
+        std::vector<TexturedTriangle::TextureCoordinates> lefttex, righttex;
+        if (texCoords.size()) {
+            for (int i = 0; i < texCoords.size(); i++) {
+                bool toLeft = false, toRight = false;
+                for (int vi = 0; vi < 3; vi++) {
+                    if (vertices[i][vi][divisionAxis] <= middle)
+                        toLeft = true;
+                    if (vertices[i][vi][divisionAxis] >=
+                        middle) // equal: both
+                        toRight = true;
+                }
+                if (toLeft) {
+                    leftvert.push_back(vertices[i]);
+                    lefttex.push_back(texCoords[i]);
+                }
+                if (toRight) {
+                    rightvert.push_back(vertices[i]);
+                    righttex.push_back(texCoords[i]);
+                }
             }
-            if (toLeft)
-                leftvert.push_back(v);
-            if (toRight)
-                rightvert.push_back(v);
-        }
+        } else
+            for (auto &v : vertices) {
+                bool toLeft = false, toRight = false;
+                for (int vi = 0; vi < 3; vi++) {
+                    if (v[vi][divisionAxis] <= middle)
+                        toLeft = true;
+                    if (v[vi][divisionAxis] >= middle) // equal: both
+                        toRight = true;
+                }
+                if (toLeft)
+                    leftvert.push_back(v);
+                if (toRight)
+                    rightvert.push_back(v);
+            }
 
         if (leftvert.size() == vertices.size() ||
             rightvert.size() == vertices.size()) // this axis failed
@@ -75,21 +108,26 @@ BoundingBox::BoundingBox(const std::vector<Triangle::Vertices> &vertices) {
         if (leftvert.size() >= BOX_MULTITHREAD_THRESHOLD &&
             rightvert.size() >= BOX_MULTITHREAD_THRESHOLD) {
             std::thread leftThread(
-                [&]() { left = new BoundingBox(leftvert); });
+                [&]() { left = new BoundingBox(leftvert, lefttex); });
             std::thread rightThread(
-                [&]() { right = new BoundingBox(rightvert); });
+                [&]() { right = new BoundingBox(rightvert, righttex); });
             leftThread.join();
             rightThread.join();
         } else {
-            left = new BoundingBox(leftvert);
-            right = new BoundingBox(rightvert);
+            left = new BoundingBox(leftvert, lefttex);
+            right = new BoundingBox(rightvert, righttex);
         }
         return;
     }
 
     // no suitable division. this is a leaf now
-    for (auto &tri : vertices)
-        triangles.push_back(TriangleBase(tri));
+    if (texCoords.size()) {
+        for (int i = 0; i < texCoords.size(); i++)
+            texturedTriangles.push_back(
+                TexturedTriangleBase(vertices[i], texCoords[i]));
+    } else
+        for (auto &tri : vertices)
+            triangles.push_back(TriangleBase(tri));
     return;
 }
 
@@ -173,6 +211,96 @@ float BoundingBox::hit(const Ray &ray, Ray &normalOut) {
     return minT;
 }
 
+float BoundingBox::hit(const Ray &ray, Ray &normalOut, Vec2f &texCoordOut) {
+    if (hasBox) {
+        if (boxT(ray) == MAXFLOAT_CONST) // miss
+            return -1;
+    }
+
+    // ray hit the box
+
+    Ray leftNormal, rightNormal;
+    Vec2f leftTex, rightTex;
+
+    if (hasChildren) {
+        float leftT = left->boxT(ray);
+        float rightT = right->boxT(ray);
+
+        if (leftT == MAXFLOAT_CONST) {
+            if (rightT == MAXFLOAT_CONST)
+                return -1;
+
+            // hit right only
+            return right->hit(ray, normalOut, texCoordOut);
+        }
+        if (rightT == MAXFLOAT_CONST) {
+            // hit left only
+            return left->hit(ray, normalOut, texCoordOut);
+        }
+        // hit both boxes. check the closest first, maybe we can avoid
+        // checking the second box
+        if (leftT < rightT) {
+            float leftHit = left->hit(ray, leftNormal, leftTex);
+            if (leftHit > 0 && leftHit < rightT) {
+                normalOut = leftNormal;
+                texCoordOut = leftTex;
+                return leftHit;
+            }
+            float rightHit = right->hit(ray, rightNormal, rightTex);
+            if (rightHit < 0) {
+                normalOut = leftNormal;
+                texCoordOut = leftTex;
+                return leftHit;
+            }
+            if (leftHit < 0 || rightHit < leftHit) {
+                normalOut = rightNormal;
+                texCoordOut = rightTex;
+                return rightHit;
+            }
+            normalOut = leftNormal;
+            texCoordOut = leftTex;
+            return leftHit;
+        }
+
+        float rightHit = right->hit(ray, rightNormal, rightTex);
+        if (rightHit > 0 && rightHit < leftT) {
+            normalOut = rightNormal;
+            texCoordOut = rightTex;
+            return rightHit;
+        }
+        float leftHit = left->hit(ray, leftNormal, leftTex);
+        if (leftHit < 0) {
+            normalOut = rightNormal;
+            texCoordOut = rightTex;
+            return rightHit;
+        }
+        if (rightHit < 0 || leftHit < rightHit) {
+            normalOut = leftNormal;
+            texCoordOut = leftTex;
+            return leftHit;
+        }
+        normalOut = rightNormal;
+        texCoordOut = rightTex;
+        return rightHit;
+    }
+
+    // we have triangles
+
+    float minT = MAXFLOAT_CONST;
+    for (auto &triangle : texturedTriangles) {
+        float t = triangle.intersect(ray, leftNormal, leftTex);
+        if (t > 0 && t < minT) {
+            minT = t;
+            normalOut = leftNormal;
+            texCoordOut = leftTex;
+        }
+    }
+    if (minT == MAXFLOAT_CONST) {
+        return -1;
+    }
+    return minT;
+}
+
 BoundingBox::Axis BoundingBox::chooseAxis() {
     float dx = max.x - min.x, dy = max.y - min.y, dz = max.z - min.z;
     if (dx > dy && dx > dz)
@@ -206,7 +334,7 @@ float BoundingBox::boxT(const Ray &ray) {
 
 bool BoundingBox::intersectsBefore(const Ray &ray, float maxt) {
     if (hasBox) {
-        if (boxT(ray) >  maxt) // miss
+        if (boxT(ray) > maxt) // miss
             return false;
     }
 
@@ -229,7 +357,8 @@ bool BoundingBox::intersectsBefore(const Ray &ray, float maxt) {
 
         // hit both boxes. check the closest first, maybe we can avoid
         // checking the second box
-        return right->intersectsBefore(ray, maxt) || left->intersectsBefore(ray, maxt);
+        return right->intersectsBefore(ray, maxt) ||
+               left->intersectsBefore(ray, maxt);
     }
 
     // we have triangles

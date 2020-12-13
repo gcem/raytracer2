@@ -1,5 +1,9 @@
 #include "parser.h"
+#include "rotate.h"
+#include "scale.h"
 #include "tinyxml2.h"
+#include "translate.h"
+
 #include <sstream>
 #include <stdexcept>
 #include <thread>
@@ -73,6 +77,7 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream >> camera.near_distance;
         stream >> camera.width >> camera.height;
         stream >> camera.image_name;
+        camera.image_name = "output/" + camera.image_name;
 
         cameras.push_back(camera);
         element = element->NextSiblingElement("Camera");
@@ -114,8 +119,6 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         child = element->FirstChildElement("SpecularReflectance");
         stream << child->GetText() << std::endl;
-        child = element->FirstChildElement("MirrorReflectance");
-        stream << child->GetText() << std::endl;
         child = element->FirstChildElement("PhongExponent");
         stream << child->GetText() << std::endl;
 
@@ -125,15 +128,23 @@ void Scene::loadFromXml(const std::string &filepath) {
             material.diffuse.z;
         stream >> material.specular.x >> material.specular.y >>
             material.specular.z;
-        stream >> material.mirror.x >> material.mirror.y >> material.mirror.z;
         stream >> material.phong_exponent;
+
+        child = element->FirstChildElement("MirrorReflectance");
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> material.mirror.x >> material.mirror.y >>
+                material.mirror.z;
+        } else
+            material.mirror = {0, 0, 0};
 
         materials.push_back(material);
         element = element->NextSiblingElement("Material");
     }
 
     // Get VertexData
-    vertex_data.push_back({}); // for padding - vertex ids are 1-indexed
+    std::vector<Vec3f> vertex_data(
+        1); // for padding - vertex ids are 1-indexed
     element = root->FirstChildElement("VertexData");
     stream << element->GetText() << std::endl;
     Vec3f vertex;
@@ -143,8 +154,105 @@ void Scene::loadFromXml(const std::string &filepath) {
     }
     stream.clear();
 
+    // Get TexCoordData
+    std::vector<Vec2f> texture_coordinates(1);
+    element = root->FirstChildElement("TexCoordData");
+
+    if (element) {
+        stream << element->GetText() << std::endl;
+        Vec2f tex_coord;
+        while (!(stream >> tex_coord.x).eof()) {
+            stream >> tex_coord.y;
+            texture_coordinates.push_back(tex_coord);
+        }
+
+        stream.clear();
+    }
+
     int materialId;
     int vid1, vid2, vid3;
+
+    // Get Textures
+    textures = std::vector<Texture>(1);
+    element = root->FirstChildElement("Textures");
+
+    if (element) {
+        element = element->FirstChildElement("Texture");
+
+        while (element) {
+            child = element->FirstChildElement("ImageName");
+            textures.push_back(Texture(child->GetText()));
+
+            std::string text;
+
+            child = element->FirstChildElement("Interpolation");
+            text = child->GetText();
+            if (text.compare("nearest") == 0) {
+                textures.back().setInterpolation(
+                    Texture::Interpolation::Nearest);
+            } else {
+                textures.back().setInterpolation(
+                    Texture::Interpolation::Bilinear);
+            }
+
+            child = element->FirstChildElement("Appearance");
+            text = child->GetText();
+            if (text.compare("clamp") == 0) {
+                textures.back().setWrap(Texture::Wrap::Clamp);
+            } else {
+                textures.back().setWrap(Texture::Wrap::Repeat);
+            }
+
+            child = element->FirstChildElement("DecalMode");
+            text = child->GetText();
+            if (text.compare("replace_kd") == 0) {
+                textures.back().mode = Texture::Mode::Diffuse;
+            } else if (text.compare("blend_kd") == 0) {
+                textures.back().mode = Texture::Mode::DiffuseBlend;
+            } else {
+                textures.back().mode = Texture::Mode::TextureOnly;
+            }
+            element = element->NextSiblingElement("Texture");
+        }
+    }
+
+    // Get Transformations
+    std::vector<Translate> translate(1); // make one-indexed
+    std::vector<Scale> scale(1);
+    std::vector<Rotate> rotate(1);
+
+    element = root->FirstChildElement("Transformations");
+
+    if (element) {
+        child = element->FirstChildElement();
+
+        while (child) {
+            const char *tagName = child->Name();
+
+            if (!strcmp(tagName, "Translation")) {
+                float dx, dy, dz;
+                stream << child->GetText() << std::endl;
+                stream >> dx >> dy >> dz;
+
+                translate.push_back(Translate(dx, dy, dz));
+            } else if (!strcmp(tagName, "Scaling")) {
+                float sx, sy, sz;
+                stream << child->GetText() << std::endl;
+                stream >> sx >> sy >> sz;
+
+                scale.push_back(Scale(sx, sy, sz));
+            } else if (!strcmp(tagName, "Rotation")) {
+                float angle, x, y, z;
+
+                stream << child->GetText() << std::endl;
+                stream >> angle >> x >> y >> z;
+
+                rotate.push_back(Rotate(angle * M_PI / 180, {x, y, z}));
+            }
+
+            child = child->NextSiblingElement();
+        }
+    }
 
     // Get Meshes
     element = root->FirstChildElement("Objects");
@@ -156,22 +264,81 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         stream >> materialId;
 
+        // transformations
+        Transformation tfm;
+        child = element->FirstChildElement("Transformations");
+
+        if (child) {
+            stream << child->GetText();
+            char c = ' ';
+            int i;
+            while (!stream.eof()) {
+                switch (c) {
+                case 't':
+                    stream >> i;
+                    tfm = translate[i] * tfm;
+                    break;
+                case 'r':
+                    stream >> i;
+                    tfm = rotate[i] * tfm;
+                    break;
+                case 's':
+                    stream >> i;
+                    tfm = scale[i] * tfm;
+                    break;
+                }
+                stream >> c;
+            }
+            stream.clear(); // reset EOF flag
+        }
+
+        int textureId = 0;
+        child = element->FirstChildElement("Texture");
+
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> textureId;
+        }
+
         child = element->FirstChildElement("Faces");
         stream << child->GetText() << std::endl;
         auto *vertices = new std::vector<TriangleBase::Vertices>();
-        while (!(stream >> vid1).eof()) {
-            stream >> vid2 >> vid3;
-            vertices->push_back(
-                {vertex_data[vid1], vertex_data[vid2], vertex_data[vid3]});
-        }
+        auto *texCoords =
+            new std::vector<TexturedTriangleBase::TextureCoordinates>();
+        if (textureId)
+            while (!(stream >> vid1).eof()) {
+                stream >> vid2 >> vid3;
+                vertices->push_back({tfm(vertex_data[vid1]),
+                                     tfm(vertex_data[vid2]),
+                                     tfm(vertex_data[vid3])});
+                texCoords->push_back({texture_coordinates[vid1],
+                                      texture_coordinates[vid2],
+                                      texture_coordinates[vid3]});
+            }
+        else
+            while (!(stream >> vid1).eof()) {
+                stream >> vid2 >> vid3;
+                vertices->push_back({tfm(vertex_data[vid1]),
+                                     tfm(vertex_data[vid2]),
+                                     tfm(vertex_data[vid3])});
+            }
         surfaces.push_back(nullptr);
         meshThreads.push_back(std::thread(
             [](std::vector<TriangleBase::Vertices> *vertices, int materialId,
+               int textureId,
+               std::vector<TexturedTriangleBase::TextureCoordinates>
+                   *texCoords,
                std::vector<Surface *> *surfaces, int surfaceIndex) {
-                (*surfaces)[surfaceIndex] = new Mesh(*vertices, materialId);
+                if (textureId)
+                    (*surfaces)[surfaceIndex] = new Mesh(
+                        *vertices, materialId, textureId, *texCoords);
+                else
+                    (*surfaces)[surfaceIndex] =
+                        new Mesh(*vertices, materialId);
                 delete vertices;
             },
-            vertices, materialId, &surfaces, (int)(surfaces.size() - 1)));
+            vertices, materialId, textureId, texCoords, &surfaces,
+            (int)(surfaces.size() - 1)));
         stream.clear();
         element = element->NextSiblingElement("Mesh");
     }
@@ -186,13 +353,56 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         stream >> materialId;
 
+        // transformations
+        Transformation tfm;
+        child = element->FirstChildElement("Transformations");
+
+        if (child) {
+            stream << child->GetText();
+            char c = ' ';
+            int i;
+            while (!stream.eof()) {
+                switch (c) {
+                case 't':
+                    stream >> i;
+                    tfm = translate[i] * tfm;
+                    break;
+                case 'r':
+                    stream >> i;
+                    tfm = rotate[i] * tfm;
+                    break;
+                case 's':
+                    stream >> i;
+                    tfm = scale[i] * tfm;
+                    break;
+                }
+                stream >> c;
+            }
+            stream.clear(); // reset EOF flag
+        }
+
         child = element->FirstChildElement("Indices");
         stream << child->GetText() << std::endl;
         stream >> vid1 >> vid2 >> vid3;
 
-        surfaces.push_back(new Triangle(
-            {vertex_data[vid1], vertex_data[vid2], vertex_data[vid3]},
-            materialId));
+        child = element->FirstChildElement("Texture");
+
+        if (child) {
+            int texId;
+            stream << child->GetText() << std::endl;
+            stream >> texId;
+            surfaces.push_back(new TexturedTriangle(
+                {tfm(vertex_data[vid1]), tfm(vertex_data[vid2]),
+                 tfm(vertex_data[vid3])},
+                materialId, texId,
+                {texture_coordinates[vid1], texture_coordinates[vid2],
+                 texture_coordinates[vid3]}));
+        } else {
+            surfaces.push_back(
+                new Triangle({tfm(vertex_data[vid1]), tfm(vertex_data[vid2]),
+                              tfm(vertex_data[vid3])},
+                             materialId));
+        }
         element = element->NextSiblingElement("Triangle");
     }
 
@@ -214,7 +424,54 @@ void Scene::loadFromXml(const std::string &filepath) {
         stream << child->GetText() << std::endl;
         stream >> radius;
 
-        surfaces.push_back(new Sphere(vertex_data[vid1], radius, materialId));
+        int texId = 0;
+        child = element->FirstChildElement("Texture");
+        Vec3f up, right;
+        if (child) {
+            stream << child->GetText() << std::endl;
+            stream >> texId;
+            up = {0, 1, 0};
+            right = {1, 0, 0};
+        }
+        // sphere-specific transformations
+        Transformation tfm;
+        child = element->FirstChildElement("Transformations");
+
+        if (child) {
+            stream << child->GetText();
+            char c = ' ';
+            int i;
+            while (!stream.eof()) {
+                switch (c) {
+                case 't':
+                    stream >> i;
+                    tfm = translate[i] * tfm;
+                    break;
+                case 'r':
+                    stream >> i;
+                    tfm = rotate[i] * tfm;
+                    if (texId) {
+                        up = rotate[i](up);
+                        right = rotate[i](right);
+                    }
+                    break;
+                case 's':
+                    stream >> i;
+                    tfm = scale[i] * tfm;
+                    radius *= scale[i].amount();
+                    break;
+                }
+                stream >> c;
+            }
+            stream.clear(); // reset EOF flag
+        }
+        if (texId)
+            surfaces.push_back(
+                new TexturedSphere(tfm(vertex_data[vid1]), radius, materialId,
+                                   texId, up, right));
+        else
+            surfaces.push_back(
+                new Sphere(tfm(vertex_data[vid1]), radius, materialId));
         element = element->NextSiblingElement("Sphere");
     }
 
